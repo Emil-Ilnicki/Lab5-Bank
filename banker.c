@@ -39,7 +39,7 @@ int main(int argc, char *argv[]){
 
     while (true){
         for (int i = 0; i < NUM_CUSTOMERS; i++){
-            id_ptr = malloc(sizeof(int));
+            int *id_ptr = malloc(sizeof(int));
             *id_ptr = i;
 
             for(int j = 0; j < NUM_RESOURCES; j++){
@@ -53,6 +53,7 @@ int main(int argc, char *argv[]){
             }
             printf("Customer %d: %d%d%d\n", i,request[0],request[1], request[2]);
             pthread_create(&thread_id, NULL, request_res, id_ptr);
+            pthread_join(&thread_id, NULL);
         }
         break;
     }
