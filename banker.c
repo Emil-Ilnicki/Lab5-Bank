@@ -18,8 +18,10 @@ int allocation[NUM_CUSTOMERS][NUM_RESOURCES];
 // Remaining need of each customer (max-allocation)
 int need[NUM_CUSTOMERS][NUM_RESOURCES];
 
+int request[3];
+
 // Customer functions
-bool request_res(int n_customer, int request[]);
+bool request_res(int n_customer);
 bool release_res(int n_customer, int release[]);
 
 void fill_matrix();
@@ -27,8 +29,7 @@ void fill_matrix();
 
 int main(int argc, char *argv[]){
 
-    // pthread_t threads[NUM_CUSTOMERS];
-    // int rc;
+    pthread_t thread_id;
 
     for (int i = 1; i < argc; i++){
         available[i] =  atoi(argv[i]);
@@ -36,16 +37,25 @@ int main(int argc, char *argv[]){
     
     fill_matrix();
 
-    // while (true){
-    //     for (int i = 0; i < NUM_CUSTOMERS; i++){
-    //         rc = pthread_create(&threads[i], request_res, i, allocation);
-    //         if (rc){
-    //             printf("ERROR; return code from pthread_create() is %d\n", rc);
-    //             exit(-1);
-    //         }
-    //     }
-    //     break;
-    // }
+    while (true){
+        for (int i = 0; i < NUM_CUSTOMERS; i++){
+            id_ptr = malloc(sizeof(int));
+            *id_ptr = i;
+
+            for(int j = 0; j < NUM_RESOURCES; j++){
+                if (need[i][j] == 0){
+                    request[j] = 0;
+                } else if (need[i][j] == 1){
+                    request[j] = 1;
+                } else {
+                    request[j] = (rand() % need[i][j]) + 1;
+                }
+            }
+            printf("Customer %d: %d%d%d\n", i,request[0],request[1], request[2]);
+            pthread_create(&thread_id, NULL, request_res, id_ptr);
+        }
+        break;
+    }
 }
 
 void fill_matrix(){
@@ -58,21 +68,26 @@ void fill_matrix(){
         }
     }
 
+    // Delete this when handing in
     printf("Allocation     Max     Need\n");
     for (int i = 0; i < NUM_CUSTOMERS; i++){
             printf("%d%d%d            %d%d%d     %d%d%d\n", allocation[i][0],allocation[i][1],allocation[i][2],max[i][0],max[i][1],max[1][2],need[i][0],need[i][1],need[i][2]);
     }
 }
 
-// // Does the acutal bankers algorithm
-// bool request_res(int n_customer, int request[]){
+// Does the acutal bankers algorithm
+bool request_res(int n_customer){
 
-//     for (int i = 0; i < NUM_RESOURCES; i++){
-//         printf("%d", request[i]);
-//     }
-// }
+    pthread_mutex_lock(&mutex);
+    for (int i = 0; i < NUM_RESOURCES; i++){
+        printf("Thread %d is requesting %d\n", n_customer, request[i]);
+    }
+    pthread_mutex_unlock(&mutex);
+
+    return true;
+}
 
 // // Changes the value of available (make sure mutex locks are here)
-// bool release_res(int n_customer, int release[]){
+// bool release_res(int n_customer){
 
 // }
