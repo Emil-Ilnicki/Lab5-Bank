@@ -18,41 +18,46 @@ int allocation[NUM_CUSTOMERS][NUM_RESOURCES];
 // Remaining need of each customer (max-allocation)
 int need[NUM_CUSTOMERS][NUM_RESOURCES];
 
-int request[3];
+struct customer{
+    int id_ptr;
+    int request[3];
+};
 
-// Customer functions
-bool request_res(int n_customer);
+bool* request_res(void* customer);
 bool release_res(int n_customer, int release[]);
 
 void fill_matrix();
 
 
 int main(int argc, char *argv[]){
-
+    
     pthread_t thread_id;
+    struct customer *cust;
 
     for (int i = 1; i < argc; i++){
         available[i] =  atoi(argv[i]);
     }
     
+
     fill_matrix();
 
     while (true){
-        for (int i = 0; i < NUM_CUSTOMERS; i++){
-            int *id_ptr = malloc(sizeof(int));
-            *id_ptr = i;
-
+        for (int i = 0; i < NUM_CUSTOMERS; i++){     
+            cust = malloc(sizeof(struct customer));
             for(int j = 0; j < NUM_RESOURCES; j++){
                 if (need[i][j] == 0){
-                    request[j] = 0;
+                    (*cust).request[j] = 0;
                 } else if (need[i][j] == 1){
-                    request[j] = 1;
+                    (*cust).request[j] = 1;
                 } else {
-                    request[j] = (rand() % need[i][j]) + 1;
+                    (*cust).request[j] = (rand() % need[i][j]) + 1;
                 }
             }
-            printf("Customer %d: %d%d%d\n", i,request[0],request[1], request[2]);
-            pthread_create(&thread_id, NULL, request_res, id_ptr);
+
+            (*cust).id_ptr = i;
+
+            printf("Customer %d: %d%d%d\n", i,(*cust).request[0],(*cust).request[1], (*cust).request[2]);
+            pthread_create(&thread_id, NULL, request_res, (void*)cust);
             pthread_join(&thread_id, NULL);
         }
         break;
@@ -60,7 +65,6 @@ int main(int argc, char *argv[]){
 }
 
 void fill_matrix(){
-
     for (int i = 0; i < NUM_CUSTOMERS; i++){
         for (int j = 0; j < NUM_RESOURCES; j++){
             allocation[i][j] = (rand() % 4);
@@ -77,11 +81,11 @@ void fill_matrix(){
 }
 
 // Does the acutal bankers algorithm
-bool request_res(int n_customer){
-
+bool* request_res(void* customer){
+    struct customer *cur_customer = (struct customer*)customer;
     pthread_mutex_lock(&mutex);
     for (int i = 0; i < NUM_RESOURCES; i++){
-        printf("Thread %d is requesting %d\n", n_customer, request[i]);
+        printf("Thread %d is requesting %d\n", (*cur_customer).id_ptr, (*cur_customer).request[i]);
     }
     pthread_mutex_unlock(&mutex);
 
