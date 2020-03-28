@@ -33,9 +33,11 @@ void print_table() {
     for (int i = 0; i < NUM_CUSTOMERS; i++) {
             printf("%d %d %d            %d %d %d     %d %d %d\n", 
             allocation[i][0],allocation[i][1],allocation[i][2],
-            max[i][0],max[i][1],max[1][2],
+            max[i][0],max[i][1],max[i][2],
             need[i][0],need[i][1],need[i][2]);
     }
+
+    printf("Available: %d %d %d\n", available[0], available[1], available[2]);
 }
 
 void fill_matrix(){
@@ -44,7 +46,7 @@ void fill_matrix(){
         for (int j = 0; j < NUM_RESOURCES; j++){
             allocation[i][j] = 0;
             max[i][j] = (rand() % available[j]);
-            need[i][j] = max[i][j] - allocation[i][j];
+            need[i][j] = max[i][j];
         }
     }
    
@@ -75,7 +77,7 @@ void* customer(void* customer_id_ptr) {
                     continue;
                 }
 
-                request[i] = rand() % need[customer_id][i] + (rand() % 2);
+                request[i] = (rand() % need[customer_id][i]) + (rand() % 2);
                 // request[i] = rand() % (
                 //     need[customer_id][i] == 1 ? 2 : need[customer_id][i]
                 // );
@@ -94,6 +96,12 @@ void* customer(void* customer_id_ptr) {
 
         // exit the thread
         if (sum_need(customer_id) == 0) {
+           
+            printf("Customer %d is complete. Releasing resources.\n", customer_id);
+            for (int i = 0; i < NUM_RESOURCES; i++) {
+                available[i] += allocation[customer_id][i];
+                allocation[customer_id][i] = 0;
+            }
             pthread_mutex_unlock(&mux);
             break;
         }
@@ -103,7 +111,7 @@ void* customer(void* customer_id_ptr) {
             if (allocation[customer_id][i] == 0) { 
                 continue;
             }
-            release[i] = rand() % allocation[customer_id][i] + rand() % 2;
+            release[i] = (rand() % allocation[customer_id][i]) + (rand() % 2);
             sum_release += release[i];
         }
 
@@ -274,6 +282,7 @@ int main(int argc, char *argv[]){
     }
     
     fill_matrix();
+    print_table();
 
     for (int i = 0; i < NUM_CUSTOMERS; i++){
 
